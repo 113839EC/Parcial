@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx skills *)",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\emanu\\\\.claude\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(mvn compile *)",
+      "Bash(java -version)",
+      "Bash(mvn -version)",
+      "Bash(mvn spring-boot:run)",
+      "Bash(curl -s -X POST http://localhost:8080/api/games -H \"Content-Type: application/json\" -d \"{\\\\\"width\\\\\":5,\\\\\"height\\\\\":5,\\\\\"playerName\\\\\":\\\\\"Player1\\\\\"}\")",
+      "Bash(python -m json.tool)",
+      "Bash(grep -v \"^$\")",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(New-Item *)",
+      "Bash(mvn test *)",
+      "Bash(pkill -f \"spring-boot\")",
+      "PowerShell(Get-NetTCPConnection *)",
+      "PowerShell($r = Invoke-WebRequest -Uri \"http://localhost:8080/swagger-ui/index.html\" -UseBasicParsing; Write-Output \"Status: $\\($r.StatusCode\\)\"; Write-Output \"Content-Type: $\\($r.Headers['Content-Type']\\)\")",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File .claude/fix-skills.ps1"
+          }
+        ]
+      }
+    ]
+  }
+}
