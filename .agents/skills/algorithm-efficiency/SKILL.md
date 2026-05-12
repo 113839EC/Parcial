@@ -419,6 +419,7 @@ For detailed treatment of specific topics, see:
 - `references/sorting-algorithms.md` — When to use each sort
 - `references/dynamic-programming.md` — Fibonacci, memoization, bottom-up patterns
 - `references/java-specifics.md` — Java-specific optimizations (streams, collections, JVM)
+- `references/game-algorithms.md` — Fisher-Yates, pathfinding, turn order, deck validation, triada, battleship
 
 ---
 
