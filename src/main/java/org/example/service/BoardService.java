@@ -48,7 +48,9 @@ public class BoardService {
     public List<int[]> shortestPath(int[][] board, int[] start, int[] end) {
         int rows = board.length, cols = board[0].length;
         int[][] parent = new int[rows][cols];
-        for (int[] row : parent) Arrays.fill(row, -1);
+        for (int[] row : parent) {
+            Arrays.fill(row, -1);
+        }
 
         boolean[][] visited = new boolean[rows][cols];
         Queue<int[]> queue = new LinkedList<>();

@@ -12,7 +12,11 @@ public enum CellType {
     CellType(int value) { this.value = value; }
 
     public static CellType fromValue(int v) {
-        for (CellType c : values()) if (c.value == v) return c;
+        for (CellType c : values()) {
+            if (c.value == v) {
+                return c;
+            }
+        }
         return EMPTY;
     }
 }

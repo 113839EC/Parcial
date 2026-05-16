@@ -44,7 +44,9 @@ public class Main {
             bonuses.append(" Final storm (+3)");
             anyBonus = true;
         }
-        if (!anyBonus) bonuses.append(" None");
+        if (!anyBonus) {
+            bonuses.append(" None");
+        }
         System.out.println(bonuses);
     }
 }

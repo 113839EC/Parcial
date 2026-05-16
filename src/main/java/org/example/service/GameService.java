@@ -62,8 +62,9 @@ public class GameService {
         logger.info("Player '{}' joining game {}", playerName, gameId);
         Game game = findGame(gameId);
 
-        if (game.getStatus() != GameStatus.WAITING)
+        if (game.getStatus() != GameStatus.WAITING) {
             throw new GameException("Game already started");
+        }
 
         Player player = Player.builder()
                 .name(playerName)
@@ -85,10 +86,12 @@ public class GameService {
         logger.info("Player {} moving to ({},{}) in game {}", playerId, x, y, gameId);
         Game game = findGame(gameId);
 
-        if (game.getStatus() != GameStatus.IN_PROGRESS)
+        if (game.getStatus() != GameStatus.IN_PROGRESS) {
             throw new GameException("Game not in progress");
-        if (!playerId.equals(game.getCurrentPlayerId()))
+        }
+        if (!playerId.equals(game.getCurrentPlayerId())) {
             throw new GameException("Not your turn");
+        }
 
         Player player = game.getPlayers().stream()
                 .filter(p -> p.getId().equals(playerId))
@@ -97,8 +100,9 @@ public class GameService {
 
         int[][] board = boardService.deserialize(game.getBoardJson());
 
-        if (!boardService.isWalkable(board, x, y))
+        if (!boardService.isWalkable(board, x, y)) {
             throw new GameException("Invalid move: cell blocked or out of bounds");
+        }
 
         board[player.getPosX()][player.getPosY()] = CellType.EMPTY.value;
         player.setPosX(x);
