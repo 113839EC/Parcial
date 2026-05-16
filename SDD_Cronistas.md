@@ -115,13 +115,13 @@ for i in 0..N-1:
 
 ## OUTPUT FORMAT
 ```
-Estrofa seleccionada:
+Selected strophe:
 (ID:1, Marca:A, Corriente:NORTE, Intensidad:5)
 ...
-Puntaje: 23
-Bonus aplicados: Caligrafía continua (+5), Tormenta final (+3)
+Score: 23
+Bonuses applied: Continuous calligraphy (+5), Final storm (+3)
 ```
-If no valid estrofa: `Sin estrofa válida. Puntaje: 0`
+If no valid estrofa: `No valid strophe found. Score: 0`
 
 ---
 

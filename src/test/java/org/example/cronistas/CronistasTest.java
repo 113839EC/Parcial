@@ -404,9 +404,9 @@ class CronistasTest {
         try {
             Main.main(new String[]{});
             String output = baos.toString();
-            assertTrue(output.contains("Puntaje: 23"));
-            assertTrue(output.contains("Caligrafía continua"));
-            assertTrue(output.contains("Tormenta final"));
+            assertTrue(output.contains("Score: 23"));
+            assertTrue(output.contains("Continuous calligraphy"));
+            assertTrue(output.contains("Final storm"));
         } finally {
             System.setOut(original);
         }

@@ -25,26 +25,26 @@ public class Main {
         Optional<Estrofa> resultado = buscador.buscar(diario, iMax);
 
         if (resultado.isEmpty()) {
-            System.out.println("Sin estrofa válida. Puntaje: 0");
+            System.out.println("No valid strophe found. Score: 0");
             return;
         }
 
         Estrofa estrofa = resultado.get();
-        System.out.println("Estrofa seleccionada:");
+        System.out.println("Selected strophe:");
         estrofa.getVientos().forEach(System.out::println);
-        System.out.println("Puntaje: " + estrofa.getPuntajeTotal());
+        System.out.println("Score: " + estrofa.getPuntajeTotal());
 
-        StringBuilder bonuses = new StringBuilder("Bonus aplicados:");
-        boolean alguno = false;
+        StringBuilder bonuses = new StringBuilder("Bonuses applied:");
+        boolean anyBonus = false;
         if (estrofa.getBonusCaligrafia() > 0) {
-            bonuses.append(" Caligrafía continua (+5)");
-            alguno = true;
+            bonuses.append(" Continuous calligraphy (+5)");
+            anyBonus = true;
         }
         if (estrofa.getBonusTormenta() > 0) {
-            bonuses.append(" Tormenta final (+3)");
-            alguno = true;
+            bonuses.append(" Final storm (+3)");
+            anyBonus = true;
         }
-        if (!alguno) bonuses.append(" Ninguno");
+        if (!anyBonus) bonuses.append(" None");
         System.out.println(bonuses);
     }
 }
