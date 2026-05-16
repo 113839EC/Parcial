@@ -1,42 +1,42 @@
-# Parcial — Backend Genérico para Juego de Mesa 2D
+# Parcial — Generic Backend for 2D Board Game
 
-Backend REST con Spring Boot para un juego de mesa 2D multijugador por turnos. Sirve como base reutilizable para cualquier parcial de juego de mesa: tablero configurable, movimiento por coordenadas, sistema de puntaje, items, salida, y BFS incluido.
+REST backend with Spring Boot for a multiplayer turn-based 2D board game. Serves as a reusable base for any board game project: configurable board, coordinate movement, scoring system, items, exit, and BFS included.
 
 ---
 
-## Stack tecnológico
+## Tech Stack
 
-| Herramienta | Versión | Para qué sirve |
+| Tool | Version | Purpose |
 |---|---|---|
-| Java | 21 | Lenguaje principal |
-| Spring Boot | 3.3.4 | Framework base (web, JPA, validación) |
-| H2 Database | Runtime | Base de datos en memoria (sin instalar nada) |
-| Spring Data JPA | — | Repositorios, transacciones, ORM |
-| Lombok | — | Elimina boilerplate (getters, builders, constructores) |
-| Jackson | — | Serializa el tablero `int[][]` a JSON en la BD |
-| SpringDoc OpenAPI | 2.6.0 | Swagger UI automático |
-| Spring Validation | — | Validación de requests con anotaciones (`@NotBlank`, `@Min`) |
-| JUnit 5 + Mockito + AssertJ | — | Tests unitarios del servicio |
+| Java | 21 | Main language |
+| Spring Boot | 3.3.4 | Base framework (web, JPA, validation) |
+| H2 Database | Runtime | In-memory database (no installation needed) |
+| Spring Data JPA | — | Repositories, transactions, ORM |
+| Lombok | — | Eliminates boilerplate (getters, builders, constructors) |
+| Jackson | — | Serializes `int[][]` board to JSON in DB |
+| SpringDoc OpenAPI | 2.6.0 | Automatic Swagger UI |
+| Spring Validation | — | Request validation with annotations (`@NotBlank`, `@Min`) |
+| JUnit 5 + Mockito + AssertJ | — | Service unit tests |
 
 ---
 
-## Estructura del proyecto
+## Project Structure
 
 ```
 src/main/java/org/example/
 ├── controller/
-│   └── GameController.java        # 5 endpoints REST
+│   └── GameController.java        # 5 REST endpoints
 ├── service/
-│   ├── GameService.java           # Lógica de negocio del juego
-│   └── BoardService.java          # Operaciones sobre el tablero
+│   ├── GameService.java           # Game business logic
+│   └── BoardService.java          # Board operations
 ├── model/
 │   ├── entity/
-│   │   ├── Game.java              # Entidad JPA: tablero, estado, jugadores
-│   │   └── Player.java            # Entidad JPA: nombre, posición, score
+│   │   ├── Game.java              # JPA entity: board, state, players
+│   │   └── Player.java            # JPA entity: name, position, score
 │   ├── dto/
-│   │   ├── CreateGameRequest.java # Body para crear partida
-│   │   ├── MoveRequest.java       # Body para mover jugador
-│   │   └── GameResponse.java      # Respuesta unificada con board + players
+│   │   ├── CreateGameRequest.java # Body to create game
+│   │   ├── MoveRequest.java       # Body to move player
+│   │   └── GameResponse.java      # Unified response with board + players
 │   └── enums/
 │       ├── GameStatus.java        # WAITING | IN_PROGRESS | FINISHED
 │       └── CellType.java          # EMPTY(0) WALL(1) PLAYER(2) ITEM(3) EXIT(4)
@@ -44,15 +44,15 @@ src/main/java/org/example/
 │   ├── GameRepository.java
 │   └── PlayerRepository.java
 └── exception/
-    ├── GameException.java         # Excepción de dominio
-    └── GlobalExceptionHandler.java # Manejo global de errores HTTP
+    ├── GameException.java         # Domain exception
+    └── GlobalExceptionHandler.java # Global HTTP error handler
 ```
 
 ---
 
-## API REST
+## REST API
 
-### Crear partida
+### Create Game
 ```http
 POST /api/games
 Content-Type: application/json
@@ -63,15 +63,15 @@ Content-Type: application/json
   "playerName": "Emanuel"
 }
 ```
-Crea tablero `width x height`. Jugador aparece en `(0,0)`, EXIT en `(height-1, width-1)`. Estado inicial: `WAITING`.
+Creates `width x height` board. Player appears at `(0,0)`, EXIT at `(height-1, width-1)`. Initial state: `WAITING`.
 
-### Unirse a partida
+### Join Game
 ```http
 POST /api/games/{id}/join?playerName=Juan
 ```
-Segundo jugador se une. Estado pasa a `IN_PROGRESS`. Acepta cualquier cantidad de jugadores mientras esté en `WAITING`.
+Second player joins. State changes to `IN_PROGRESS`. Accepts any number of players while in `WAITING`.
 
-### Mover jugador
+### Move Player
 ```http
 POST /api/games/{id}/move
 Content-Type: application/json
@@ -82,177 +82,177 @@ Content-Type: application/json
   "y": 0
 }
 ```
-Mueve al jugador a la celda `(x, y)`. Validaciones: solo el jugador del turno actual puede mover, la celda no puede ser `WALL` ni estar fuera de límites.
+Moves player to cell `(x, y)`. Validations: only the current turn's player can move, cell cannot be `WALL` or out of bounds.
 
-### Ver estado de partida
+### Get Game State
 ```http
 GET /api/games/{id}
 ```
 
-### Listar partidas abiertas
+### List Open Games
 ```http
 GET /api/games/open
 ```
-Devuelve todas las partidas en estado `WAITING`.
+Returns all games in `WAITING` state.
 
 ---
 
-## Lógica del juego
+## Game Logic
 
-### Ciclo de vida
+### Lifecycle
 ```
-WAITING → (segundo jugador se une) → IN_PROGRESS → (alguien llega al EXIT) → FINISHED
+WAITING → (second player joins) → IN_PROGRESS → (someone reaches EXIT) → FINISHED
 ```
 
-### Turnos
-Rotación circular entre todos los jugadores. Al terminar un turno, `currentPlayerId` pasa al siguiente en la lista (`(idx + 1) % players.size()`).
+### Turns
+Circular rotation among all players. After each turn, `currentPlayerId` advances to the next in the list (`(idx + 1) % players.size()`).
 
-### Puntaje
-| Evento | Puntos |
+### Score
+| Event | Points |
 |---|---|
-| Recoger ITEM (celda 3) | +10 |
-| Llegar al EXIT (celda 4) | +100 + fin de partida |
+| Pick up ITEM (cell 3) | +10 |
+| Reach EXIT (cell 4) | +100 + game over |
 
-### Tablero
-- Representado como `int[][]` (board[fila][columna])
-- Almacenado en BD como JSON string (columna `boardJson`, longitud 10000)
-- Serializado/deserializado por `BoardService` con Jackson
+### Board
+- Represented as `int[][]` (board[row][column])
+- Stored in DB as JSON string (column `boardJson`, length 10000)
+- Serialized/deserialized by `BoardService` using Jackson
 
 ---
 
-## Algoritmos en BoardService
+## Algorithms in BoardService
 
-### BFS — Camino mínimo
+### BFS — Shortest Path
 ```java
 boardService.shortestPath(board, new int[]{startX, startY}, new int[]{endX, endY})
-// Devuelve List<int[]> con el camino, vacío si no hay ruta
+// Returns List<int[]> with path, empty if no route
 ```
-BFS estándar con 4 direcciones. Ignora celdas `WALL`. Listo para usar si el parcial pide pathfinding.
+Standard BFS with 4 directions. Ignores `WALL` cells. Ready to use if pathfinding is required.
 
 ### Fisher-Yates Shuffle
 ```java
 boardService.shuffle(deck)
-// Mezcla in-place un int[], distribución uniforme O(n)
+// In-place shuffle of int[], uniform distribution O(n)
 ```
-Útil para repartir cartas, generar tableros aleatorios, etc.
+Useful for dealing cards, generating random boards, etc.
 
 ---
 
-## Tipos de celda
+## Cell Types
 
 ```java
-EMPTY  = 0   // celda libre
-WALL   = 1   // bloqueada, no se puede pisar
-PLAYER = 2   // posición de un jugador
-ITEM   = 3   // item recogible (+10 pts)
-EXIT   = 4   // salida de la partida (+100 pts, termina juego)
+EMPTY  = 0   // free cell
+WALL   = 1   // blocked, cannot step on
+PLAYER = 2   // player position
+ITEM   = 3   // collectible item (+10 pts)
+EXIT   = 4   // game exit (+100 pts, ends game)
 ```
 
 ---
 
-## Base de datos
+## Database
 
-H2 en memoria, sin instalación. Al reiniciar la app los datos se pierden (`create-drop`).
+H2 in-memory, no installation needed. Data is lost on app restart (`create-drop`).
 
-- **Consola H2:** `http://localhost:8080/h2-console`
+- **H2 Console:** `http://localhost:8080/h2-console`
   - JDBC URL: `jdbc:h2:mem:gamedb`
-  - User: `sa` / Password: *(vacío)*
+  - User: `sa` / Password: *(empty)*
 
 ---
 
-## Documentación interactiva
+## Interactive Documentation
 
-Swagger UI disponible automáticamente al levantar la app:
+Swagger UI available automatically on app startup:
 
 ```
 http://localhost:8080/swagger-ui/index.html
 ```
 
-Permite probar todos los endpoints sin Postman.
+Allows testing all endpoints without Postman.
 
 ---
 
 ## Tests
 
-5 tests unitarios en `GameServiceTest` con Mockito:
+5 unit tests in `GameServiceTest` with Mockito:
 
-| Test | Qué verifica |
+| Test | What it verifies |
 |---|---|
-| `makeMove_validMove_updatesPlayerPosition` | Posición del jugador se actualiza |
-| `makeMove_wrongTurn_throwsGameException` | No se puede mover si no es tu turno |
-| `makeMove_invalidCell_throwsGameException` | No se puede mover a celda bloqueada |
-| `makeMove_reachExit_setsFinishedAndAddsScore` | Llegar al EXIT termina el juego y da 100 pts |
-| `getGame_nonExistentId_throwsGameException` | ID inexistente lanza excepción correcta |
+| `makeMove_validMove_updatesPlayerPosition` | Player position is updated |
+| `makeMove_wrongTurn_throwsGameException` | Cannot move if not your turn |
+| `makeMove_invalidCell_throwsGameException` | Cannot move to blocked cell |
+| `makeMove_reachExit_setsFinishedAndAddsScore` | Reaching EXIT ends game and awards 100 pts |
+| `getGame_nonExistentId_throwsGameException` | Non-existent ID throws correct exception |
 
-Correr tests:
+Run tests:
 ```bash
 mvn test
 ```
 
 ---
 
-## Levantar el proyecto
+## Run the Project
 
 ```bash
 mvn spring-boot:run
 ```
 
-Requisitos: Java 21, Maven 3.x. No requiere BD externa.
+Requirements: Java 21, Maven 3.x. No external DB required.
 
 ---
 
-## Claude Code — Skills y Agentes instalados
+## Claude Code — Installed Skills and Agents
 
-Este proyecto tiene skills de Claude Code instalados en `.agents/skills/`. Se activan automáticamente al usar Claude Code en este directorio.
+This project has Claude Code skills installed in `.agents/skills/`. They activate automatically when using Claude Code in this directory.
 
-### Skills instalados
+### Installed Skills
 
-| Skill | Fuente | Comando | Para qué sirve |
+| Skill | Source | Command | Purpose |
 |---|---|---|---|
-| `caveman` | `juliusbrussee/caveman` | `/caveman` | Respuestas ultra-comprimidas ~75% menos tokens. Niveles: `lite`, `full`, `ultra` |
-| `find-skills` | `vercel-labs/skills` | `/find-skills` | Busca e instala skills del ecosistema de agentes vía `npx skills` |
-| `game-development` | `sickn33/antigravity-awesome-skills` | `/game-development` | Orquestador para desarrollo de juegos. Rutea a skills específicos según la plataforma |
-| `java-springboot` | `github/awesome-copilot` | `/java-springboot` | Best practices para desarrollar aplicaciones Spring Boot en Java |
-| `create-spring-boot-java-project` | `github/awesome-copilot` | `/create-spring-boot-java-project` | Genera skeleton completo de proyecto Spring Boot con Java |
-| `unit-test-service-layer` | `giuseppe-trisciuoglio/developer-kit` | `/unit-test-service-layer` | Tests de capa de servicio con JUnit 5 + Mockito — aplica directo sobre `GameService` |
-| `nodejs-backend-patterns` | `wshobson/agents` | `/nodejs-backend-patterns` | Patrones de backend Node.js (Express/Fastify): middleware, auth, error handling, REST, WebSockets |
+| `caveman` | `juliusbrussee/caveman` | `/caveman` | Ultra-compressed responses ~75% fewer tokens. Levels: `lite`, `full`, `ultra` |
+| `find-skills` | `vercel-labs/skills` | `/find-skills` | Finds and installs skills from the agent ecosystem via `npx skills` |
+| `game-development` | `sickn33/antigravity-awesome-skills` | `/game-development` | Game development orchestrator. Routes to specific skills based on platform |
+| `java-springboot` | `github/awesome-copilot` | `/java-springboot` | Best practices for developing Spring Boot applications in Java |
+| `create-spring-boot-java-project` | `github/awesome-copilot` | `/create-spring-boot-java-project` | Generates complete Spring Boot project skeleton with Java |
+| `unit-test-service-layer` | `giuseppe-trisciuoglio/developer-kit` | `/unit-test-service-layer` | Service layer tests with JUnit 5 + Mockito — applies directly to `GameService` |
+| `nodejs-backend-patterns` | `wshobson/agents` | `/nodejs-backend-patterns` | Node.js backend patterns (Express/Fastify): middleware, auth, error handling, REST, WebSockets |
 
-### Cómo usar los skills
+### How to Use Skills
 
 ```bash
-# Activar modo caveman (respuestas cortas, sin relleno)
+# Activate caveman mode (short responses, no filler)
 /caveman
 
-# Con nivel específico
-/caveman lite     # frases completas pero sin relleno
-/caveman ultra    # máxima compresión, abreviaciones
+# With specific level
+/caveman lite     # full sentences but no filler
+/caveman ultra    # maximum compression, abbreviations
 
-# Buscar un skill para una tarea
-/find-skills      # y describir qué necesitás
+# Find a skill for a task
+/find-skills      # and describe what you need
 ```
 
-### Gestionar skills con la CLI
+### Manage Skills with CLI
 
 ```bash
-# Buscar skills disponibles
+# Find available skills
 npx skills find <query>
 
-# Instalar un skill
+# Install a skill
 npx skills add <owner/repo@skill>
 
-# Ver skills instalados / actualizaciones
+# View installed skills / updates
 npx skills check
 npx skills update
 ```
 
-Los skills se guardan en `.agents/skills/` y el lock file en `skills-lock.json`. Ambos se versionen en git para que cualquiera que clone el repo tenga los mismos skills disponibles.
+Skills are stored in `.agents/skills/` and the lock file in `skills-lock.json`. Both are versioned in git so anyone who clones the repo has the same skills available.
 
 ---
 
-## Cómo extender para tu parcial
+## How to Extend for Your Project
 
-1. **Agregar tipo de celda**: agrega valor al enum `CellType`
-2. **Nueva regla de movimiento**: modifica `GameService.makeMove()`
-3. **Más algoritmos de tablero**: agrega métodos a `BoardService`
-4. **Persistir datos entre reinicios**: cambiar H2 a PostgreSQL en `application.properties`
-5. **Agregar cartas/mazo**: usar `boardService.shuffle()` sobre un array de IDs de cartas
+1. **Add cell type**: add value to `CellType` enum
+2. **New movement rule**: modify `GameService.makeMove()`
+3. **More board algorithms**: add methods to `BoardService`
+4. **Persist data between restarts**: switch H2 to PostgreSQL in `application.properties`
+5. **Add cards/deck**: use `boardService.shuffle()` on an array of card IDs
