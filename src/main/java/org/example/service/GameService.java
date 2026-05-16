@@ -2,7 +2,6 @@ package org.example.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.exception.GameException;
-import org.example.model.dto.GameResponse;
 import org.example.model.entity.Game;
 import org.example.model.entity.Player;
 import org.example.model.enums.CellType;
@@ -27,7 +26,7 @@ public class GameService {
     private final BoardService boardService;
 
     @Transactional
-    public GameResponse createGame(int width, int height, String playerName) {
+    public Game createGame(int width, int height, String playerName) {
         logger.info("Creating game {}x{} for player '{}'", width, height, playerName);
 
         int[][] board = boardService.emptyBoard(width, height);
@@ -55,11 +54,11 @@ public class GameService {
         game = gameRepository.save(game);
 
         logger.info("Game {} created, waiting for players", game.getId());
-        return toResponse(game);
+        return game;
     }
 
     @Transactional
-    public GameResponse joinGame(Long gameId, String playerName) {
+    public Game joinGame(Long gameId, String playerName) {
         logger.info("Player '{}' joining game {}", playerName, gameId);
         Game game = findGame(gameId);
 
@@ -78,11 +77,11 @@ public class GameService {
         game = gameRepository.save(game);
 
         logger.info("Game {} started with {} players", gameId, game.getPlayers().size());
-        return toResponse(game);
+        return game;
     }
 
     @Transactional
-    public GameResponse makeMove(Long gameId, Long playerId, int x, int y) {
+    public Game makeMove(Long gameId, Long playerId, int x, int y) {
         logger.info("Player {} moving to ({},{}) in game {}", playerId, x, y, gameId);
         Game game = findGame(gameId);
 
@@ -122,18 +121,17 @@ public class GameService {
         game.setCurrentPlayerId(players.get((idx + 1) % players.size()).getId());
 
         playerRepository.save(player);
-        return toResponse(gameRepository.save(game));
+        return gameRepository.save(game);
     }
 
     @Transactional(readOnly = true)
-    public GameResponse getGame(Long gameId) {
-        return toResponse(findGame(gameId));
+    public Game getGame(Long gameId) {
+        return findGame(gameId);
     }
 
     @Transactional(readOnly = true)
-    public List<GameResponse> getOpenGames() {
-        return gameRepository.findByStatus(GameStatus.WAITING)
-                .stream().map(this::toResponse).toList();
+    public List<Game> getOpenGames() {
+        return gameRepository.findByStatus(GameStatus.WAITING);
     }
 
     private Game findGame(Long id) {
@@ -142,25 +140,5 @@ public class GameService {
                     logger.warn("Game {} not found", id);
                     return new GameException("Game not found: " + id);
                 });
-    }
-
-    private GameResponse toResponse(Game game) {
-        return GameResponse.builder()
-                .id(game.getId())
-                .status(game.getStatus())
-                .width(game.getWidth())
-                .height(game.getHeight())
-                .board(boardService.deserialize(game.getBoardJson()))
-                .currentPlayerId(game.getCurrentPlayerId())
-                .players(game.getPlayers().stream()
-                        .map(p -> GameResponse.PlayerResponse.builder()
-                                .id(p.getId())
-                                .name(p.getName())
-                                .posX(p.getPosX())
-                                .posY(p.getPosY())
-                                .score(p.getScore())
-                                .build())
-                        .toList())
-                .build();
     }
 }

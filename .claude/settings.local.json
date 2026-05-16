@@ -19,7 +19,11 @@
       "PowerShell($r = Invoke-WebRequest -Uri \"http://localhost:8080/swagger-ui/index.html\" -UseBasicParsing; Write-Output \"Status: $\\($r.StatusCode\\)\"; Write-Output \"Content-Type: $\\($r.Headers['Content-Type']\\)\")",
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(npm install *)",
+      "Bash(git clone *)",
+      "Bash(del *)"
     ]
   },
   "hooks": {
