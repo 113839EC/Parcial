@@ -46,6 +46,16 @@ class CronistasTest {
     }
 
     @Test
+    void longitud4_valida() {
+        List<Viento> vientos = List.of(
+                v(1,'A', Corriente.NORTE, 1),
+                v(2,'B', Corriente.NORTE, 1),
+                v(3,'C', Corriente.NORTE, 1),
+                v(4,'D', Corriente.NORTE, 1));
+        assertTrue(validador.validarLongitud(vientos));
+    }
+
+    @Test
     void longitud5_valida() {
         List<Viento> vientos = List.of(
                 v(1,'A', Corriente.NORTE, 1),
